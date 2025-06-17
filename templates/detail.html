@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>帳戶明細</title>
+  <meta charset="UTF-8">
+</head>
+
+<body>
+  <h1>帳戶明細 - 帳戶 ID: {{ account.id }}</h1>
+  <p>帳戶擁有者：{{ account.user.name }}</p>
+  <p>目前餘額：${{ '%.0f'|format(account.balance) }}</p>
+  <p>年利率：{{ account.interest_rate }}%</p>
+
+  <h2>交易紀錄</h2>
+  <table border="1">
+    <tr>
+      <th>日期</th>
+      <th>類型</th>
+      <th>金額</th>
+      <th>說明</th>
+      <th>餘額</th>
+    </tr>
+    {% for tx in transactions %}
+    <tr>
+      <td>{{ tx.date.strftime('%Y-%m-%d') }}</td>
+      <td>{{ tx.type }}</td>
+      <td>${{ '%.0f'|format(tx.amount) }}</td>
+      <td>{{ tx.note }}</td>
+      <td>${{ '%.0f'|format(tx.balance_after) }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <br>
+  <a href="{{ url_for('index') }}">返回首頁</a>
+</body>
+
+</html>
