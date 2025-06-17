@@ -93,38 +93,42 @@ def new_account():
     payout_cycle = request.form['payout_cycle']
     date_str = request.form.get('deposit_date')
 
-    # 建立帳戶
     acc = Account(user_id=user_id, balance=balance, interest_rate=interest_rate, payout_cycle=payout_cycle)
     db.session.add(acc)
     db.session.commit()
 
-    # 處理存入日期
-    if date_str:
-        tx_date = datetime.strptime(date_str, "%Y-%m-%d")
-    else:
+    # 處理存入日期（預設為今天）
+    try:
+        tx_date = datetime.strptime(date_str, "%Y-%m-%d") if date_str else datetime.utcnow()
+    except ValueError:
         tx_date = datetime.utcnow()
 
     # 建立初始存入交易
-    tx = Transaction(account_id=acc.id, type='deposit', amount=balance, note='初始存入', date=tx_date)
+    tx = Transaction(
+        account_id=acc.id,
+        type='deposit',
+        amount=balance,
+        note='初始存入',
+        date=tx_date,
+        balance_after=acc.balance
+    )
     db.session.add(tx)
 
-    # 補發月配息邏輯（只適用月配息）
-    if payout_cycle == 'monthly':
+    # 建立歷史月配息交易（僅當日期早於今天）
+    if payout_cycle == 'monthly' and tx_date.date() < date.today():
         monthly_rate = interest_rate / 12 / 100
-        start_date = tx_date.date()
-        today = date.today()
+        current_date = tx_date.date()
 
-        # 起始月份的 25 日，如果已過當月25日，則從下個月25日開始
-        if start_date.day > 25:
-            start_date = (start_date.replace(day=1) + timedelta(days=32)).replace(day=25)
+        # 從下個 25 號開始
+        if current_date.day > 25:
+            current_date = (current_date.replace(day=1) + timedelta(days=32)).replace(day=25)
         else:
-            start_date = start_date.replace(day=25)
+            current_date = current_date.replace(day=25)
 
         current_balance = balance
-        current_date = start_date
 
-        while current_date < today:
-            interest = round(current_balance * monthly_rate, 2)
+        while current_date < date.today():
+            interest = int(current_balance * monthly_rate)  # 去掉小數點
             current_balance += interest
             acc.balance += interest
             interest_tx = Transaction(
@@ -132,16 +136,17 @@ def new_account():
                 type='interest',
                 amount=interest,
                 note='歷史月配息',
-                date=datetime(current_date.year, current_date.month, 25)
+                date=datetime(current_date.year, current_date.month, 25),
+                balance_after=acc.balance
             )
             db.session.add(interest_tx)
-
-            # 下一個月
+            # 前往下個月
             next_month = current_date.replace(day=1) + timedelta(days=32)
             current_date = next_month.replace(day=25)
 
     db.session.commit()
     return redirect(url_for('index'))
+
 
 @app.route('/delete_account/<int:account_id>', methods=['POST'])
 def delete_account(account_id):
