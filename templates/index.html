@@ -1,65 +1,72 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-  <title>帳戶總覽</title>
-  <meta charset="utf-8">
+    <meta charset="UTF-8">
+    <title>帳戶總覽</title>
 </head>
-
 <body>
-  <h1>帳戶總覽</h1>
-  <table border="1">
-    <tr>
-      <th>帳戶ID</th>
-      <th>使用者</th>
-      <th>餘額</th>
-      <th>操作</th>
-    </tr>
-    {% for account in accounts %}
-    <tr>
-      <td>{{ account.id }}</td>
-      <td>{{ account.user.name }}</td>
-      <td>{{ account.balance }}</td>
-      <td>
-        <a href="{{ url_for('account_detail', account_id=account.id) }}">查看</a>
-        <form action="{{ url_for('delete_account', account_id=account.id) }}" method="post" style="display:inline;">
-          <button type="submit" onclick="return confirm('確定要刪除帳戶？')">刪除</button>
-        </form>
-      </td>
-    </tr>
-    {% endfor %}
-  </table>
+    <h1>帳戶總覽</h1>
 
-  <h2>新增帳戶</h2>
-  <form action="{{ url_for('new_account') }}" method="post">
-    <label for="user_id">使用者:</label>
-    <select name="user_id">
-      {% for user in users %}
-      <option value="{{ user.id }}">{{ user.name }}</option>
-      {% endfor %}
-    </select><br>
-    <label>初始存入金額:</label>
-    <input type="number" name="balance" step="0.01" required><br>
-    <label>利率 (%):</label>
-    <input type="number" name="interest_rate" step="0.01" value="1.0"><br>
-    <label>配息週期:</label>
-    <select name="payout_cycle">
-      <option value="monthly">每月</option>
-      <option value="yearly">每年</option>
-    </select><br>
-    <label>存入日期 (選填):</label>
-    <input type="date" name="deposit_date"><br>
-    <button type="submit">新增帳戶</button>
-  </form>
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>帳戶ID</th>
+            <th>使用者</th>
+            <th>餘額</th>
+            <th>操作</th>
+        </tr>
+        {% for account in accounts %}
+        <tr>
+            <td>{{ account.id }}</td>
+            <td>{{ account.user.name }}</td>
+            <td>${{ '%.0f' | format(account.balance) }}</td>
+            <td>
+                <a href="{{ url_for('account_detail', account_id=account.id) }}">查看</a>
+                <form action="{{ url_for('delete_account', account_id=account.id) }}" method="POST" style="display:inline;">
+                    <button type="submit" onclick="return confirm('確定要刪除帳戶嗎？');">刪除</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
 
-  <h2>新增使用者</h2>
-  <form action="{{ url_for('new_user') }}" method="post">
-    <label>姓名:</label>
-    <input type="text" name="name" required><br>
-    <label>Email:</label>
-    <input type="email" name="email" required><br>
-    <button type="submit">新增使用者</button>
-  </form>
+    <hr>
+
+    <h2>新增使用者</h2>
+    <form method="POST" action="{{ url_for('new_user') }}">
+        <label for="name">姓名：</label>
+        <input type="text" name="name" required><br>
+        <label for="email">Email：</label>
+        <input type="email" name="email" required><br>
+        <button type="submit">新增使用者</button>
+    </form>
+
+    <hr>
+
+    <h2>新增帳戶</h2>
+    <form method="POST" action="{{ url_for('new_account') }}">
+        <label for="user_id">使用者：</label>
+        <select name="user_id" required>
+            {% for user in users %}
+            <option value="{{ user.id }}">{{ user.name }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label for="balance">初始金額：</label>
+        <input type="number" name="balance" step="0.01" required><br>
+
+        <label for="interest_rate">年利率(%)：</label>
+        <input type="number" name="interest_rate" step="0.01" required><br>
+
+        <label for="payout_cycle">配息週期：</label>
+        <select name="payout_cycle">
+            <option value="monthly">月配息</option>
+            <option value="yearly">年配息</option>
+        </select><br>
+
+        <label for="deposit_date">存入日期：</label>
+        <input type="date" name="deposit_date"><br>
+
+        <button type="submit">新增帳戶</button>
+    </form>
 </body>
-
 </html>
